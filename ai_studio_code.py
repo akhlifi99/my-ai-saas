@@ -1,4 +1,4 @@
-```python
+
 from __future__ import annotations
 
 import base64
@@ -1902,4 +1902,3 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-```
