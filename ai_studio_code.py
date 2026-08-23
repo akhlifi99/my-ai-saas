@@ -1,403 +1,281 @@
+from __future__ import annotations
+
+import base64
+import hashlib
+import hmac
+import os
+import sqlite3
+import textwrap
+from datetime import datetime, timedelta
+from html import escape as html_escape
+from typing import Any, Dict, List, Optional, Sequence
+
 import streamlit as st
-from openai import OpenAI
+import streamlit.components.v1 as components
 
-# ============================================================
-# PAGE CONFIG
-# ============================================================
+try:
+    from openai import OpenAI
+except Exception:
+    OpenAI = None
 
+try:
+    from cryptography.fernet import Fernet
+except Exception:
+    Fernet = None
+
+# =============================================================================
+# 1) PAGE CONFIGURATION
+# =============================================================================
 st.set_page_config(
-    page_title="AI Studio",
+    page_title="OmniToolsPro | Chatbot SaaS",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ============================================================
-# CUSTOM CSS — HIGH CONTRAST / ACCESSIBLE CHAT UI
-# ============================================================
+APP_NAME = "OmniToolsPro"
+APP_DB_PATH = "omnitoolspro.sqlite3"
+DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_PAGE = "📊 Dashboard"
 
+BASE_PAGES = [
+    "📊 Dashboard",
+    "🤖 My Chatbots",
+    "📚 Knowledge Base",
+    "💬 Widget Settings",
+]
+ADMIN_PAGE = "⚙️ Admin"
+ALL_PAGES = BASE_PAGES + [ADMIN_PAGE]
+
+# =============================================================================
+# 2) THEME & HIGH-CONTRAST CSS
+# =============================================================================
 st.markdown(
     """
-    <style>
-    /* ========================================================
-       GLOBAL
-       ======================================================== */
+<style>
+    :root {
+        --bg: #0f172a;
+        --panel: #1a233a;
+        --border: #334155;
+        --text: #ffffff;
+        --muted: #94a3b8;
+        --blue: #1d4ed8;
+        --blue-2: #3b82f6;
+    }
 
-    html,
-    body,
     [data-testid="stAppViewContainer"],
-    [data-testid="stApp"] {
-        color: #f1f5f9 !important;
-    }
-
-    /* Main application text */
-    .stMarkdown,
-    .stMarkdown p,
-    .stMarkdown span,
-    .stMarkdown div,
-    .stMarkdown li,
-    .stMarkdown label {
-        color: #f1f5f9 !important;
-    }
-
-    /* ========================================================
-       CHAT MESSAGES
-       ======================================================== */
-
-    [data-testid="stChatMessage"] {
-        background-color: #1e293b !important;
+    [data-testid="stHeader"],
+    [data-testid="stSidebar"],
+    .main {
+        background-color: var(--bg) !important;
         color: #ffffff !important;
-        border: 1px solid #334155 !important;
-        border-radius: 12px !important;
-        padding: 1rem !important;
-        margin-bottom: 0.75rem !important;
     }
-
-    /* Every text element inside chat messages */
-    [data-testid="stChatMessage"] *,
-    [data-testid="stChatMessage"] p,
-    [data-testid="stChatMessage"] span,
-    [data-testid="stChatMessage"] div,
-    [data-testid="stChatMessage"] li,
-    [data-testid="stChatMessage"] ul,
-    [data-testid="stChatMessage"] ol,
-    [data-testid="stChatMessage"] strong,
-    [data-testid="stChatMessage"] em,
-    [data-testid="stChatMessage"] b,
-    [data-testid="stChatMessage"] i,
-    [data-testid="stChatMessage"] h1,
-    [data-testid="stChatMessage"] h2,
-    [data-testid="stChatMessage"] h3,
-    [data-testid="stChatMessage"] h4,
-    [data-testid="stChatMessage"] h5,
-    [data-testid="stChatMessage"] h6 {
-        color: #f1f5f9 !important;
-    }
-
-    /* Chat links */
-    [data-testid="stChatMessage"] a {
-        color: #93c5fd !important;
-        text-decoration: underline !important;
-    }
-
-    [data-testid="stChatMessage"] a:hover {
-        color: #bfdbfe !important;
-    }
-
-    /* Inline code */
-    [data-testid="stChatMessage"] code {
-        color: #ffffff !important;
-        background-color: #0f172a !important;
-        border: 1px solid #475569 !important;
-        border-radius: 5px !important;
-        padding: 0.15rem 0.35rem !important;
-    }
-
-    /* Code blocks */
-    [data-testid="stChatMessage"] pre {
-        background-color: #0f172a !important;
-        color: #f8fafc !important;
-        border: 1px solid #475569 !important;
-        border-radius: 8px !important;
-        padding: 1rem !important;
-        overflow-x: auto !important;
-    }
-
-    [data-testid="stChatMessage"] pre code {
-        background-color: transparent !important;
-        border: none !important;
-        color: #f8fafc !important;
-    }
-
-    /* Tables inside chat */
-    [data-testid="stChatMessage"] table {
-        color: #f1f5f9 !important;
-        border-collapse: collapse !important;
-    }
-
-    [data-testid="stChatMessage"] th,
-    [data-testid="stChatMessage"] td {
-        color: #f1f5f9 !important;
-        border: 1px solid #475569 !important;
-        padding: 0.5rem !important;
-    }
-
-    [data-testid="stChatMessage"] th {
-        background-color: #334155 !important;
-    }
-
-    [data-testid="stChatMessage"] td {
-        background-color: #1e293b !important;
-    }
-
-    /* Blockquotes */
-    [data-testid="stChatMessage"] blockquote {
-        color: #e2e8f0 !important;
-        border-left: 4px solid #64748b !important;
-        background-color: #0f172a !important;
-        padding: 0.5rem 1rem !important;
-    }
-
-    /* ========================================================
-       CHAT INPUT
-       ======================================================== */
-
-    [data-testid="stChatInput"] {
-        background-color: transparent !important;
-    }
-
-    [data-testid="stChatInput"] > div {
-        background-color: #1e293b !important;
-        border: 1px solid #475569 !important;
-        border-radius: 12px !important;
-    }
-
-    [data-testid="stChatInput"] textarea {
-        color: #ffffff !important;
-        background-color: #1e293b !important;
-        caret-color: #ffffff !important;
-        -webkit-text-fill-color: #ffffff !important;
-    }
-
-    [data-testid="stChatInput"] textarea::placeholder {
-        color: #cbd5e1 !important;
-        opacity: 1 !important;
-        -webkit-text-fill-color: #cbd5e1 !important;
-    }
-
-    [data-testid="stChatInput"] textarea:focus {
-        color: #ffffff !important;
-        -webkit-text-fill-color: #ffffff !important;
-        border-color: #94a3b8 !important;
-        outline: none !important;
-    }
-
-    /* Chat input buttons */
-    [data-testid="stChatInput"] button {
-        color: #ffffff !important;
-        background-color: #334155 !important;
-    }
-
-    [data-testid="stChatInput"] button:hover {
-        background-color: #475569 !important;
-    }
-
-    /* ========================================================
-       SIDEBAR
-       ======================================================== */
 
     [data-testid="stSidebar"] {
+        border-right: 1px solid var(--border) !important;
+    }
+
+    #MainMenu, footer, header {
+        visibility: hidden;
+    }
+
+    p, span, label, div, h1, h2, h3, h4, h5, h6 {
+        color: #ffffff !important;
+    }
+
+    .stTextInput input, .stTextArea textarea, .stSelectbox div {
         background-color: #0f172a !important;
-    }
-
-    [data-testid="stSidebar"] *,
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] span,
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] div {
-        color: #f1f5f9 !important;
-    }
-
-    /* ========================================================
-       INPUTS / TEXT AREAS
-       ======================================================== */
-
-    input,
-    textarea {
         color: #ffffff !important;
-        background-color: #1e293b !important;
-        -webkit-text-fill-color: #ffffff !important;
+        border: 1px solid var(--border) !important;
     }
 
-    input::placeholder,
-    textarea::placeholder {
-        color: #cbd5e1 !important;
-        opacity: 1 !important;
-        -webkit-text-fill-color: #cbd5e1 !important;
-    }
-
-    /* ========================================================
-       SELECTBOX / MULTISELECT
-       ======================================================== */
-
-    [data-baseweb="select"] {
-        background-color: #1e293b !important;
+    [data-testid="stChatMessage"] {
+        background-color: #1a233a !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
         color: #ffffff !important;
     }
 
-    [data-baseweb="select"] * {
+    [data-testid="stChatMessage"] p {
         color: #ffffff !important;
     }
-
-    /* ========================================================
-       BUTTONS
-       ======================================================== */
 
     .stButton > button {
+        background-color: var(--blue) !important;
         color: #ffffff !important;
-        background-color: #334155 !important;
-        border: 1px solid #64748b !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
     }
 
     .stButton > button:hover {
-        color: #ffffff !important;
-        background-color: #475569 !important;
-        border-color: #94a3b8 !important;
+        background-color: var(--blue-2) !important;
     }
-
-    /* ========================================================
-       ALERTS / STATUS MESSAGES
-       ======================================================== */
-
-    [data-testid="stAlert"] {
-        color: #f1f5f9 !important;
-    }
-
-    [data-testid="stAlert"] * {
-        color: #f1f5f9 !important;
-    }
-
-    /* ========================================================
-       EXPANDERS
-       ======================================================== */
-
-    [data-testid="stExpander"] {
-        background-color: #1e293b !important;
-        border: 1px solid #334155 !important;
-    }
-
-    [data-testid="stExpander"] * {
-        color: #f1f5f9 !important;
-    }
-
-    /* ========================================================
-       CODE / PRE
-       ======================================================== */
-
-    pre,
-    code {
-        color: #f8fafc !important;
-    }
-
-    /* ========================================================
-       DISABLED ELEMENTS
-       ======================================================== */
-
-    input:disabled,
-    textarea:disabled,
-    button:disabled {
-        color: #cbd5e1 !important;
-        -webkit-text-fill-color: #cbd5e1 !important;
-    }
-    </style>
-    """,
+</style>
+""",
     unsafe_allow_html=True,
 )
 
-# ============================================================
-# OPENAI CLIENT
-# ============================================================
+# =============================================================================
+# 3) DB & AUTH HELPERS
+# =============================================================================
+def db_connect() -> sqlite3.Connection:
+    conn = sqlite3.connect(APP_DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-st.title("🤖 AI Studio")
-st.caption("OpenAI-powered chat interface")
+def db_init() -> None:
+    with db_connect() as conn:
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL,
+                is_active INTEGER DEFAULT 1,
+                created_at TEXT, updated_at TEXT
+            );
 
-api_key = st.sidebar.text_input(
-    "OpenAI API Key",
-    type="password",
-    help="Enter your OpenAI API key.",
-)
+            CREATE TABLE IF NOT EXISTS chatbots (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                owner_user_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                prompt TEXT NOT NULL,
+                model TEXT DEFAULT 'gpt-4o-mini',
+                welcome_message TEXT DEFAULT 'Hi! How can I help you today?',
+                api_key_enc TEXT DEFAULT '',
+                is_active INTEGER DEFAULT 1,
+                created_at TEXT, updated_at TEXT
+            );
 
-model = st.sidebar.selectbox(
-    "Model",
-    [
-        "gpt-5.6",
-        "gpt-5.4",
-        "gpt-5.2",
-    ],
-    index=0,
-)
+            CREATE TABLE IF NOT EXISTS kb_documents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                owner_user_id INTEGER NOT NULL,
+                bot_id INTEGER NOT NULL,
+                filename TEXT NOT NULL,
+                content_text TEXT NOT NULL,
+                created_at TEXT
+            );
 
-if st.sidebar.button("Clear conversation"):
-    st.session_state.messages = []
-    st.rerun()
+            CREATE TABLE IF NOT EXISTS conversations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                owner_user_id INTEGER NOT NULL,
+                bot_id INTEGER NOT NULL,
+                title TEXT DEFAULT 'Live Demo',
+                created_at TEXT, updated_at TEXT
+            );
 
-# ============================================================
-# SESSION STATE
-# ============================================================
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# ============================================================
-# DISPLAY CHAT HISTORY
-# ============================================================
-
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# ============================================================
-# CHAT INPUT
-# ============================================================
-
-prompt = st.chat_input("Message AI Studio...")
-
-if prompt:
-    # Store user message
-    st.session_state.messages.append(
-        {
-            "role": "user",
-            "content": prompt,
-        }
-    )
-
-    # Display user message
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    if not api_key:
-        with st.chat_message("assistant"):
-            st.error("Please enter your OpenAI API key in the sidebar.")
-
-        st.session_state.messages.append(
-            {
-                "role": "assistant",
-                "content": "Please enter your OpenAI API key in the sidebar.",
-            }
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                conversation_id INTEGER NOT NULL,
+                role TEXT NOT NULL,
+                content TEXT NOT NULL,
+                created_at TEXT
+            );
+            """
         )
 
-    else:
-        try:
-            client = OpenAI(api_key=api_key)
+def hash_password(password: str) -> str:
+    salt = os.urandom(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 120_000)
+    return f"{salt.hex()}${digest.hex()}"
 
-            with st.chat_message("assistant"):
-                response_placeholder = st.empty()
+def verify_password(password: str, stored: str) -> bool:
+    try:
+        salt_hex, hash_hex = stored.split("$", 1)
+        salt = bytes.fromhex(salt_hex)
+        expected = bytes.fromhex(hash_hex)
+        candidate = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 120_000)
+        return hmac.compare_digest(candidate, expected)
+    except Exception:
+        return False
 
-                response = client.responses.create(
-                    model=model,
-                    input=st.session_state.messages,
+# =============================================================================
+# 4) INITIALIZATION
+# =============================================================================
+db_init()
+
+if "auth_user_id" not in st.session_state:
+    st.session_state.auth_user_id = None
+if "nav_page" not in st.session_state:
+    st.session_state.nav_page = DEFAULT_PAGE
+
+# =============================================================================
+# 5) LOGIN / SETUP
+# =============================================================================
+with db_connect() as conn:
+    user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+
+if user_count == 0:
+    st.title("First-Time Setup")
+    with st.form("admin_setup"):
+        name = st.text_input("Admin Name")
+        email = st.text_input("Admin Email")
+        password = st.text_input("Password", type="password")
+        submit = st.form_submit_button("Create Admin Account")
+        if submit and name and email and password:
+            now = datetime.utcnow().isoformat()
+            with db_connect() as conn:
+                conn.execute(
+                    "INSERT INTO users (name, email, password_hash, role, created_at, updated_at) VALUES (?, ?, ?, 'admin', ?, ?)",
+                    (name, email.lower(), hash_password(password), now, now)
                 )
+            st.success("Admin created! Please refresh.")
+            st.rerun()
+elif st.session_state.auth_user_id is None:
+    st.title("Login to OmniToolsPro")
+    with st.form("login_form"):
+        email = st.text_input("Email")
+        password = st.text_input("Password", type="password")
+        submit = st.form_submit_button("Sign In")
+        if submit:
+            with db_connect() as conn:
+                user = conn.execute("SELECT * FROM users WHERE email = ?", (email.lower(),)).fetchone()
+            if user and verify_password(password, user["password_hash"]):
+                st.session_state.auth_user_id = user["id"]
+                st.success("Logged in!")
+                st.rerun()
+            else:
+                st.error("Invalid email or password.")
+else:
+    # Sidebar Navigation without state conflicts
+    st.sidebar.title("🤖 OmniToolsPro")
+    
+    # Safe navigation option selection
+    selected_page = st.sidebar.radio("Menu", ALL_PAGES, index=ALL_PAGES.index(st.session_state.nav_page) if st.session_state.nav_page in ALL_PAGES else 0)
+    st.session_state.nav_page = selected_page
 
-                answer = response.output_text
+    if st.sidebar.button("Logout"):
+        st.session_state.auth_user_id = None
+        st.rerun()
 
-                response_placeholder.markdown(answer)
+    # Main views
+    if st.session_state.nav_page == "📊 Dashboard":
+        st.title("📊 System Analytics")
+        st.write("Welcome to your AI Chatbot SaaS platform.")
 
-            st.session_state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": answer,
-                }
-            )
+    elif st.session_state.nav_page == "🤖 My Chatbots":
+        st.title("🤖 My Chatbots")
+        if st.button("+ New Bot"):
+            now = datetime.utcnow().isoformat()
+            with db_connect() as conn:
+                conn.execute(
+                    "INSERT INTO chatbots (owner_user_id, name, prompt, created_at, updated_at) VALUES (?, 'New Assistant', 'You are a helpful assistant.', ?, ?)",
+                    (st.session_state.auth_user_id, now, now)
+                )
+            st.success("Created new bot!")
+            st.rerun()
 
-        except Exception as exc:
-            error_message = f"Error: {exc}"
+    elif st.session_state.nav_page == "📚 Knowledge Base":
+        st.title("📚 Knowledge Base")
+        st.write("Upload documents to train your bots.")
 
-            with st.chat_message("assistant"):
-                st.error(error_message)
+    elif st.session_state.nav_page == "💬 Widget Settings":
+        st.title("💬 Widget & Chat Test")
+        st.write("Test your assistant live with OpenAI.")
 
-            st.session_state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": error_message,
-                }
-            )
+    elif st.session_state.nav_page == "⚙️ Admin":
+        st.title("⚙️ Admin Settings")
+        st.write("User management panel.")
+        
