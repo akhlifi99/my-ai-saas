@@ -4,28 +4,28 @@ import uuid
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="AI Chatbot SaaS | Professional",
-    page_icon="🤖",
+    page_title="AI Studio | Deep Purple Edition",
+    page_icon="🔮",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- VIBRANT & CRISP CUSTOM STYLING ---
+# --- SOPHISTICATED DARK PURPLE THEME CSS ---
 st.markdown("""
     <style>
-    /* Main App Background */
+    /* Main App Background - Deep Aubergine */
     .stApp {
-        background-color: #f8fafc;
-        color: #1e293b;
+        background-color: #1a122e;
+        color: #ffffff;
     }
 
-    /* Sidebar Background (Vibrant Blue) */
+    /* Sidebar Background - Deeper Purple/Navy */
     [data-testid="stSidebar"] {
-        background-color: #1d4ed8 !important;
-        border-right: 1px solid #e2e8f0;
+        background-color: #100a1f !important;
+        border-right: 1px solid #2d2445;
     }
 
-    /* Sidebar Branding & Text - Pure White */
+    /* Sidebar Branding & Text - High Contrast White */
     [data-testid="stSidebar"] .stMarkdown h1, 
     [data-testid="stSidebar"] .stMarkdown p,
     [data-testid="stSidebar"] label,
@@ -36,10 +36,10 @@ st.markdown("""
     .sidebar-brand {
         font-size: 22px;
         font-weight: 800;
-        color: #ffffff;
+        color: #a78bfa; /* Light Lilac accent */
         padding: 25px 0px;
         text-align: center;
-        border-bottom: 1px solid rgba(255,255,255,0.2);
+        border-bottom: 1px solid #2d2445;
         margin-bottom: 20px;
     }
 
@@ -50,58 +50,58 @@ st.markdown("""
         border-radius: 10px !important;
         margin-bottom: 5px !important;
         font-weight: 500 !important;
+        color: #ffffff !important;
     }
 
     div[role="radiogroup"] > label:hover {
-        background-color: rgba(255,255,255,0.1) !important;
+        background-color: rgba(167, 139, 250, 0.1) !important;
     }
 
     div[role="radiogroup"] > label[data-checked="true"] {
-        background-color: #ffffff !important;
-        color: #1d4ed8 !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        background-color: #1d4ed8 !important; /* Preserved Vibrant Blue */
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
     }
     
     div[role="radiogroup"] > label[data-checked="true"] span {
-        color: #1d4ed8 !important;
+        color: white !important;
     }
 
-    /* Card Containers (White with subtle borders) */
+    /* Card Containers - Sophisticated Dark Purple */
     .metric-card, .bot-card {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
+        background-color: #241b3a;
+        border: 1px solid #352a52;
+        border-radius: 16px;
         padding: 20px;
         margin-bottom: 20px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
 
     /* Main Dashboard Titles */
     .main-header {
         font-size: 32px;
         font-weight: 800;
-        color: #0f172a;
+        color: #ffffff;
         margin-bottom: 5px;
     }
     .main-subtitle {
-        color: #64748b;
+        color: #a78bfa; /* Lilac subtitle */
         margin-bottom: 30px;
     }
 
-    /* Profile Section Bottom of Blue Sidebar */
+    /* Profile Section Bottom */
     .sidebar-profile {
         position: fixed;
         bottom: 20px;
         left: 20px;
         width: 220px;
         padding: 15px;
-        background-color: rgba(255,255,255,0.15);
+        background-color: #241b3a;
         border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.2);
-        backdrop-filter: blur(10px);
+        border: 1px solid #352a52;
     }
 
-    /* Primary Buttons */
+    /* Primary Action Buttons - Vibrant Blue */
     .stButton > button {
         background-color: #1d4ed8 !important;
         color: white !important;
@@ -109,27 +109,39 @@ st.markdown("""
         border: none !important;
         font-weight: 700 !important;
         padding: 0.6rem 2rem !important;
-        transition: 0.2s;
+        transition: 0.3s ease;
     }
     
     .stButton > button:hover {
-        background-color: #1e40af !important;
-        box-shadow: 0 10px 15px -3px rgba(29, 78, 216, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(29, 78, 216, 0.4);
+    }
+
+    /* Form Inputs */
+    .stTextInput > div > div > input, .stTextArea > div > div > textarea {
+        background-color: #100a1f !important;
+        color: white !important;
+        border: 1px solid #352a52 !important;
     }
 
     /* Tabs Styling */
-    .stTabs [data-baseweb="tab-list"] { gap: 15px; }
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
     .stTabs [data-baseweb="tab"] {
-        height: 45px;
-        background-color: #ffffff;
+        background-color: #241b3a;
         border-radius: 8px 8px 0 0;
-        border: 1px solid #e2e8f0;
-        padding: 10px 20px;
-        color: #64748b;
+        border: 1px solid #352a52;
+        color: #ffffff;
     }
     .stTabs [aria-selected="true"] {
         background-color: #1d4ed8 !important;
-        color: white !important;
+        border-color: #1d4ed8 !important;
+    }
+
+    /* Chat Messages */
+    [data-testid="stChatMessage"] {
+        background-color: #241b3a !important;
+        border: 1px solid #352a52 !important;
+        border-radius: 15px !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -142,9 +154,9 @@ if "messages" not in st.session_state:
 if "api_key" not in st.session_state:
     st.session_state.api_key = ""
 
-# --- SIDEBAR: VIBRANT NAVIGATION ---
+# --- SIDEBAR: DEEP PURPLE NAVIGATION ---
 with st.sidebar:
-    st.markdown('<div class="sidebar-brand">🤖 AI STUDIO</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-brand">🔮 AI STUDIO</div>', unsafe_allow_html=True)
     
     menu = st.radio(
         "NAVIGATION",
@@ -152,12 +164,12 @@ with st.sidebar:
         label_visibility="collapsed"
     )
     
-    # Profile Card at the bottom
+    # Profile Card
     st.markdown(f"""
         <div class="sidebar-profile">
-            <small style="color: rgba(255,255,255,0.7);">Logged in as</small><br>
+            <small style="color: #a78bfa;">User Profile</small><br>
             <strong style="color: white;">Alex Mitchell</strong><br>
-            <span style="font-size: 12px; background: white; color: #1d4ed8; padding: 2px 8px; border-radius: 20px; font-weight: bold;">PRO PLAN</span>
+            <span style="font-size: 11px; background: #1d4ed8; color: white; padding: 2px 8px; border-radius: 20px; font-weight: bold;">PRO MEMBER</span>
         </div>
     """, unsafe_allow_html=True)
 
@@ -165,31 +177,31 @@ with st.sidebar:
 
 # 1. DASHBOARD
 if menu == "📊 Dashboard":
-    st.markdown('<div class="main-header">Analytics Overview</div>', unsafe_allow_html=True)
-    st.markdown('<div class="main-subtitle">Real-time performance tracking for your active chatbots.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">Dashboard Analytics</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-subtitle">Performance overview across all your AI instances.</div>', unsafe_allow_html=True)
     
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.metric("Total Chats", "2,540", "+18%")
+        st.metric("Total Chats", "14,201", "+22%")
         st.markdown('</div>', unsafe_allow_html=True)
     with c2:
         st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.metric("Leads Generated", "412", "+7%")
+        st.metric("Leads Captured", "892", "+5%")
         st.markdown('</div>', unsafe_allow_html=True)
     with c3:
         st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.metric("Handoff Rate", "4.2%", "-2%")
+        st.metric("Resolution Rate", "94.2%", "0.8%")
         st.markdown('</div>', unsafe_allow_html=True)
     
-    st.line_chart({"Daily Chats": [12, 45, 32, 67, 89, 75, 110]})
+    st.area_chart({"Inquiries": [30, 55, 42, 88, 120, 95, 140]})
 
 # 2. MY CHATBOTS
 elif menu == "🤖 My Chatbots":
     col_h, col_b = st.columns([4, 1])
     with col_h:
         st.markdown('<div class="main-header">My Chatbots</div>', unsafe_allow_html=True)
-        st.markdown('<div class="main-subtitle">Manage and deploy your automated AI assistants.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="main-subtitle">One chatbot = one website = its own knowledge base.</div>', unsafe_allow_html=True)
     with col_b:
         st.write("<br>", unsafe_allow_html=True)
         if st.button("+ New Chatbot"):
@@ -199,9 +211,9 @@ elif menu == "🤖 My Chatbots":
 
     if not st.session_state.chatbots:
         st.markdown("""
-            <div style="text-align: center; padding: 80px; background: white; border: 2px dashed #cbd5e1; border-radius: 20px;">
-                <h3 style="color: #64748b;">Ready to automate?</h3>
-                <p>No chatbots created yet. Your first one is just a click away.</p>
+            <div style="text-align: center; padding: 80px; background: #241b3a; border: 2px dashed #352a52; border-radius: 20px;">
+                <h3 style="color: #a78bfa;">Build your first AI Assistant</h3>
+                <p style="color: white;">Automate your customer support in minutes.</p>
             </div>
         """, unsafe_allow_html=True)
     else:
@@ -210,11 +222,11 @@ elif menu == "🤖 My Chatbots":
                 <div class="bot-card">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <span style="color: #10b981; font-weight: bold;">● Active</span>
-                            <h3 style="margin: 0; color: #0f172a;">{bot['name']}</h3>
-                            <small style="color: #64748b;">ID: {bot['id']} | Last Activity: 2 mins ago</small>
+                            <span style="color: #10b981; font-weight: bold; font-size: 12px;">● LIVE</span>
+                            <h3 style="margin: 0; color: white;">{bot['name']}</h3>
+                            <small style="color: #a78bfa;">ID: {bot['id']} | Last Activity: 1m ago</small>
                         </div>
-                        <div style="color: #1d4ed8; cursor: pointer; font-weight: bold;">Edit Bot →</div>
+                        <div style="color: #1d4ed8; font-weight: bold; cursor: pointer;">Manage →</div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
@@ -222,33 +234,30 @@ elif menu == "🤖 My Chatbots":
 # 3. KNOWLEDGE BASE
 elif menu == "📚 Knowledge Base":
     st.markdown('<div class="main-header">Knowledge Base</div>', unsafe_allow_html=True)
-    st.markdown('<div class="main-subtitle">Train your bots on specific data sources.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-subtitle">Upload documentation to fine-tune your chatbot response logic.</div>', unsafe_allow_html=True)
     
-    with st.container():
-        st.markdown('<div class="bot-card">', unsafe_allow_html=True)
-        kb_input = st.text_area("Document Content", placeholder="Enter text or documentation to train your AI...", height=250)
-        if st.button("Index & Train"):
-            st.success("Knowledge base successfully indexed with Vector Embeddings.")
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="bot-card">', unsafe_allow_html=True)
+    kb_input = st.text_area("Source Documentation", placeholder="Paste website content or FAQs here...", height=300)
+    if st.button("Sync Data"):
+        st.success("Knowledge indexed and embedded.")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # 4. WIDGET SETTINGS
 elif menu == "💬 Widget Settings":
-    st.markdown('<div class="main-header">Widget Configuration</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">Widget & Deployment</div>', unsafe_allow_html=True)
     
-    t1, t2, t3 = st.tabs(["⚙️ Global Settings", "👁️ Live Sandbox", "📜 Embed Script"])
+    t1, t2, t3 = st.tabs(["⚙️ Config", "👁️ Live Test", "📜 Embed"])
     
     with t1:
         st.session_state.api_key = st.text_input("OpenAI API Key", value=st.session_state.api_key, type="password")
-        st.text_input("Widget Title", "AI Support Assistant")
-        st.color_picker("Brand Color", "#1d4ed8")
+        st.text_input("Bot Brand Name", "Nova AI")
+        st.color_picker("Accent Color", "#1d4ed8")
         
     with t2:
-        st.info("Test your chatbot responses below using gpt-4o-mini.")
         for msg in st.session_state.messages:
-            with st.chat_message(msg["role"]):
-                st.markdown(msg["content"])
+            with st.chat_message(msg["role"]): st.markdown(msg["content"])
         
-        if p := st.chat_input("Ask something..."):
+        if p := st.chat_input("Send a test message..."):
             st.session_state.messages.append({"role": "user", "content": p})
             with st.chat_message("user"): st.markdown(p)
             
@@ -263,17 +272,16 @@ elif menu == "💬 Widget Settings":
                 except Exception as e: st.error(str(e))
 
     with t3:
-        st.markdown("### Deployment Code")
-        st.code(f'<script src="https://app.aistudio.com/widget.js" data-id="{str(uuid.uuid4())[:8]}" defer></script>', language="html")
+        st.code(f'<script src="https://cdn.ai-studio.io/widget.js" data-id="BOT_{str(uuid.uuid4())[:8]}" defer></script>', language="html")
 
 # 5. ADMIN
 elif menu == "⚙️ Admin":
-    st.markdown('<div class="main-header">System Admin</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">Settings & Billing</div>', unsafe_allow_html=True)
     st.markdown('<div class="bot-card">', unsafe_allow_html=True)
-    st.write("Current Plan: **Business Pro**")
-    st.write("Active Connections: **12 / 50**")
-    st.button("Upgrade Subscription")
+    st.write("Current Usage: **Advanced**")
+    st.progress(65)
+    st.button("Update Billing Details")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- FOOTER ---
-st.markdown("<br><hr><center><small style='color: #94a3b8;'>AI Studio SaaS Engine v2.0 | Built with Streamlit</small></center>", unsafe_allow_html=True)
+st.markdown("<br><hr><center><small style='color: #a78bfa;'>AI Studio Deep Purple SaaS Engine | v2.1.0</small></center>", unsafe_allow_html=True)
